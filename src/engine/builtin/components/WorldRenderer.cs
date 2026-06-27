@@ -3,34 +3,17 @@ using Raylib_cs;
 
 namespace PhrawgEngine
 {
-    /// <summary>
-    /// Loads a Valve-220 .map plus its baked lightmap (atlas PNG + manifest JSON)
-    /// and renders the static world as lit geometry through the pipeline.
-    ///
-    /// Pipeline role: implements IRenderable and registers itself. It draws with
-    /// the pipeline's lightmap shader (albedo * baked light), not the dynamic
-    /// Blinn-Phong world shader. Geometry is grouped into one mesh per texture so
-    /// each can later bind its own material; for now every texture gets a
-    /// generated checkerboard so the UV layout (and the bake) is clearly visible.
-    ///
-    /// Coordinate space is the map's native Quake Z-up — positions are used as-is
-    /// so they line up exactly with the baker's JSON.
-    /// </summary>
     public class WorldRenderer : Entity, IRenderable
     {
-        // Scene-configurable: base path without extension. The renderer appends
-        // ".map", "_lightmap.json", "_lightmap.png".
         public string mapPath = "src/engine/builtin/maps/demo";
 
-        private readonly List<Model> _models = new();      // one per texture group
+        private readonly List<Model> _models = new();
         private readonly Dictionary<string, Texture2D> _textureCache = new();
         private Texture2D _checker;
         private Texture2D _lightmapTex;
         private bool _built;
         private bool _registered;
 
-        // Where material textures live; the face's texture name (e.g.
-        // "horror/stone_brick_02") is resolved under here with common extensions.
         private const string TextureDir = "src/engine/builtin/textures/";
 
         public override void Load()
@@ -58,7 +41,6 @@ namespace PhrawgEngine
             if (File.Exists(jsonFile)) lm = LightmapManifest.Load(jsonFile);
             else Console.WriteLine($"[WorldRenderer] lightmap manifest not found: {jsonFile}");
 
-            // Albedo placeholder + lightmap atlas.
             _checker = GenChecker(64, 8);
             if (File.Exists(pngFile))
             {
@@ -70,10 +52,9 @@ namespace PhrawgEngine
             else
             {
                 Console.WriteLine($"[WorldRenderer] lightmap png not found: {pngFile}");
-                _lightmapTex = _checker; // harmless fallback
+                _lightmapTex = _checker;
             }
 
-            // Group faces by texture so each becomes one mesh/model.
             var groups = new Dictionary<string, List<MapData.Face>>();
             foreach (var f in map.Faces)
             {
@@ -95,21 +76,10 @@ namespace PhrawgEngine
             HandleBrushEntities(map);
         }
 
-        /// <summary>
-        /// Hook for non-worldspawn brush entities (doors, platforms, triggers).
-        /// Intentionally empty for now — these will become their own dynamic
-        /// renderers/movers rather than baked static geometry.
-        /// </summary>
-        private void HandleBrushEntities(MapData.Result map)
-        {
-            // TODO: split brush entities (func_door, func_rotating, etc.) out of
-            // the static world and give them their own movable renderers + light
-            // probes. Left empty deliberately.
-        }
+        private void HandleBrushEntities(MapData.Result map) { }
 
         private unsafe Model? BuildGroupModel(string texture, List<MapData.Face> faces, LightmapManifest.Data? lm)
         {
-            // Triangulate every face as a fan; collect interleaved vertex arrays.
             var positions = new List<Vector3>();
             var albedoUVs = new List<Vector2>();
             var lightUVs  = new List<Vector2>();
@@ -123,9 +93,6 @@ namespace PhrawgEngine
                 int n = face.Winding.Count;
                 for (int i = 1; i < n - 1; i++)
                 {
-                    // The Z-up -> Y-up conversion (x, z, -y) is a reflection, which
-                    // inverts triangle winding. Reverse the fan order so front faces
-                    // stay front-facing (otherwise walls render see-through).
                     AddVertex(face, face.Winding[0], mf, positions, albedoUVs, lightUVs, normals);
                     AddVertex(face, face.Winding[i + 1], mf, positions, albedoUVs, lightUVs, normals);
                     AddVertex(face, face.Winding[i], mf, positions, albedoUVs, lightUVs, normals);
@@ -135,9 +102,6 @@ namespace PhrawgEngine
             int vcount = positions.Count;
             if (vcount == 0) return null;
 
-            // Build the mesh by allocating native arrays directly. We avoid the
-            // higher-level Mesh.Alloc* helpers because their availability varies
-            // across raylib-cs versions; raw float* fields + MemAlloc are stable.
             var mesh = new Mesh
             {
                 VertexCount = vcount,
@@ -172,30 +136,26 @@ namespace PhrawgEngine
             Raylib.UploadMesh(ref mesh, false);
             Model model = Raylib.LoadModelFromMesh(mesh);
 
-            // Resolve the material texture (falls back to the checkerboard when the
-            // image file isn't present), bind it to map 0 (texture0 in the shader).
+            // Albedo in slot 0 (texture0 in the shader).
             model.Materials[0].Maps[(int)MaterialMapIndex.Albedo].Texture = ResolveAlbedo(texture);
+            // Lightmap atlas in slot 1 (Metalness map). The pipeline wires
+            // locs[MAP_METALNESS] → "lightmap" uniform so DrawMesh binds it automatically.
+            model.Materials[0].Maps[(int)MaterialMapIndex.Metalness].Texture = _lightmapTex;
             return model;
         }
 
-        /// <summary>Quake Z-up world coords -> raylib Y-up: (x, y, z) -> (x, z, -y).</summary>
         private static Vector3 ToYUp(Vector3 q) => new(q.X, q.Z, -q.Y);
 
         private static void AddVertex(
             MapData.Face face, Vector3 p, LightmapManifest.FaceUV? mf,
             List<Vector3> pos, List<Vector2> alb, List<Vector2> light, List<Vector3> nrm)
         {
-            // UVs and lightmap matching use the ORIGINAL Quake-space position,
-            // because the Valve texture axes and the baker's JSON are both authored
-            // in that space. Only the emitted vertex position/normal are flipped
-            // to raylib's Y-up so the level isn't rendered sideways.
             pos.Add(ToYUp(p));
             nrm.Add(ToYUp(face.Normal));
             alb.Add(face.AlbedoUV(p, MapData.DefaultTexSize, MapData.DefaultTexSize));
             light.Add(mf != null ? LightmapManifest.LightmapUVForVertex(mf, p) : Vector2.Zero);
         }
 
-        // IRenderable: draw all texture-group models with the lightmap shader.
         public unsafe void Render(RenderPipeline pipeline)
         {
             if (!_built) return;
@@ -203,18 +163,14 @@ namespace PhrawgEngine
             Shader sh = pipeline.LightmapShader;
             foreach (var model in _models)
             {
-                // Apply the lightmap shader and bind the atlas to its sampler.
+                // Apply the lightmap shader. The lightmap atlas texture is already
+                // in Maps[Metalness] (slot 1) from BuildGroupModel; the pipeline
+                // wired locs[MAP_METALNESS] → "lightmap", so DrawMesh binds it.
                 model.Materials[0].Shader = sh;
-                Raylib.SetShaderValueTexture(sh, pipeline.LightmapTexLoc, _lightmapTex);
                 Raylib.DrawModel(model, Vector3.Zero, 1f, Color.White);
             }
         }
 
-        /// <summary>
-        /// Resolve a face texture name (e.g. "horror/stone_brick_02") to a loaded
-        /// texture under TextureDir, trying common extensions. Falls back to the
-        /// generated checkerboard if no file is found. Results are cached.
-        /// </summary>
         private Texture2D ResolveAlbedo(string texture)
         {
             if (_textureCache.TryGetValue(texture, out var cached)) return cached;
@@ -243,7 +199,6 @@ namespace PhrawgEngine
             return result;
         }
 
-        /// <summary>Simple two-tone checkerboard so UVs/bake read clearly.</summary>
         private static Texture2D GenChecker(int size, int checks)
         {
             Image img = Raylib.GenImageChecked(size, size, size / checks, size / checks,
