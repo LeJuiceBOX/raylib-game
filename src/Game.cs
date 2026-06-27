@@ -9,6 +9,9 @@ namespace PhrawgEngine
         public static Camera3D CurrentCamera = new(new Vector3(-25,25,-25),new Vector3(0,0,0), Vector3.UnitY,75f,CameraProjection.Perspective);
         public static Workspace Workspace = new();
 
+        // The HDR render pipeline. Renderer components register with this.
+        public static RenderPipeline Pipeline = new();
+
         private static void LoadGame()
         {
             Console.WriteLine("Game started.");
@@ -31,18 +34,13 @@ namespace PhrawgEngine
             Workspace.Draw2DWorkspace();
         }
 
-        private static void DrawGame3D()
-        {
-            Workspace.Draw3DWorkspace();
-            //Raylib.DrawSphere(new Vector3(0,2.5f,0),5f,Color.Orange);
-            //Raylib.DrawPlane(Vector3.Zero,new Vector2(64,64),Color.Green);
-        }
-
-
         public static void Setup()
         {
             Raylib.InitWindow(1280, 720, "Raylib 3D | PhrawgEngine");
             Raylib.SetTargetFPS(60);
+
+            // Pipeline needs a GL context, so init after the window exists.
+            Pipeline.Init(1280, 720);
         }
 
         public static void Run()
@@ -51,17 +49,28 @@ namespace PhrawgEngine
             while (!Raylib.WindowShouldClose())
             {
                 float dt = Raylib.GetFrameTime();
-                Raylib.BeginDrawing();
-                Raylib.ClearBackground(Color.DarkGray);
+
+                // Update first so the camera (FreeCam) is current before we render.
                 UpdateGame(dt);
-                Raylib.BeginMode3D(CurrentCamera);
-                    DrawGame3D();
-                Raylib.EndMode3D();
+
+                Raylib.BeginDrawing();
+                    Raylib.ClearBackground(Color.DarkGray);
+
+                    // HDR scene pass + tonemap composite to the backbuffer.
+                    Pipeline.RenderFrame(CurrentCamera);
+
+                    // Legacy immediate-mode renderers (SimpleSphere/Plane) still
+                    // draw via the component callback, unshaded, over the composite.
+                    Raylib.BeginMode3D(CurrentCamera);
+                        Workspace.Draw3DWorkspace();
+                    Raylib.EndMode3D();
+
                     DrawGame2D();
                 Raylib.EndDrawing();
             }
 
+            Pipeline.Shutdown();
             Raylib.CloseWindow();
         }
-    } 
+    }
 }

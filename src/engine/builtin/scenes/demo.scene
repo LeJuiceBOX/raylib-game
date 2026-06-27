@@ -6,21 +6,66 @@
         "Components": []
     },
     {
-        "Name": "Plane",
+        "Name": "World",
+        "Type": "PhrawgEngine.WorldRenderer",
+        "Properties": {
+            "mapPath": "src/engine/builtin/maps/demo"
+        },
+        "Components": []
+    },
+    {
+        "Name": "Ground",
         "Type": "PhrawgEngine.Entity",
         "Properties": {},
         "Components": [
             {
                 "Type": "PhrawgEngine.Transform",
-                "Properties": {
-                    "Position": [32,14,12]
-                }
+                "Properties": { "Position": [0, 0, 0] }
             },
             {
-                "Type": "PhrawgEngine.SimpleSphereRenderer",
+                "Type": "PhrawgEngine.MeshRenderer",
                 "Properties": {
-                    "Radius": 43.0,
-                    "Color": [255,0,0]
+                    "Shape": "Plane",
+                    "Size": [64, 1, 64],
+                    "Color": [120, 130, 120]
+                }
+            }
+        ]
+    },
+    {
+        "Name": "ShadedCube",
+        "Type": "PhrawgEngine.Entity",
+        "Properties": {},
+        "Components": [
+            {
+                "Type": "PhrawgEngine.Transform",
+                "Properties": { "Position": [0, 5, 0] }
+            },
+            {
+                "Type": "PhrawgEngine.MeshRenderer",
+                "Properties": {
+                    "Shape": "Cube",
+                    "Size": [8, 8, 8],
+                    "Color": [200, 120, 80]
+                }
+            }
+        ]
+    },
+    {
+        "Name": "ShadedSphere",
+        "Type": "PhrawgEngine.Entity",
+        "Properties": {},
+        "Components": [
+            {
+                "Type": "PhrawgEngine.Transform",
+                "Properties": { "Position": [20, 6, 0] }
+            },
+            {
+                "Type": "PhrawgEngine.MeshRenderer",
+                "Properties": {
+                    "Shape": "Sphere",
+                    "Size": [6, 6, 6],
+                    "Color": [80, 140, 220]
                 }
             }
         ]

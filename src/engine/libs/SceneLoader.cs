@@ -22,11 +22,16 @@ namespace PhrawgEngine
             // Resolve the entity type by full name; default to Entity.
             Type entType = ResolveType(entJson, typeof(Entity));
 
-            // Workspace.AddEntity<T>() is generic + new(), so invoke via reflection.
+            // Add the entity WITHOUT loading yet, so we can fully construct it
+            // (name, properties, components, component properties) before a single
+            // LoadEntity() pass runs Load() in the correct order.
             MethodInfo addEntity = typeof(Workspace)
-                .GetMethod(nameof(Workspace.AddEntity))!
+                .GetMethods()
+                .First(m => m.Name == nameof(Workspace.AddEntity)
+                            && m.IsGenericMethodDefinition
+                            && m.GetParameters().Length == 1)
                 .MakeGenericMethod(entType);
-            Entity ent = (Entity)addEntity.Invoke(workspace, null)!;
+            Entity ent = (Entity)addEntity.Invoke(workspace, new object[] { false })!;
 
             if (entJson.TryGetProperty("Name", out JsonElement nameEl)
                 && nameEl.ValueKind == JsonValueKind.String)
@@ -43,6 +48,10 @@ namespace PhrawgEngine
                     AddOrConfigureComponent(ent, compJson);
                 }
             }
+
+            // Everything is configured — now run Load() exactly once, in order:
+            // all components first, then the entity (matches LoadEntity's contract).
+            ent.LoadEntity();
 
             return ent;
         }
@@ -61,10 +70,15 @@ namespace PhrawgEngine
             }
             else
             {
+                // Select the AddComponent<T>(bool load) overload and defer Load()
+                // until properties are applied (done by the entity's LoadEntity pass).
                 MethodInfo addComp = typeof(Entity)
-                    .GetMethod(nameof(Entity.AddComponent))!
+                    .GetMethods()
+                    .First(m => m.Name == nameof(Entity.AddComponent)
+                                && m.IsGenericMethodDefinition
+                                && m.GetParameters().Length == 1)
                     .MakeGenericMethod(compType);
-                component = addComp.Invoke(ent, null)!;
+                component = addComp.Invoke(ent, new object[] { false })!;
             }
 
             ApplyProperties(component, compJson);
@@ -123,6 +137,32 @@ namespace PhrawgEngine
                 if (a.Length < 3) return false;
                 value = new Vector3(a[0], a[1], a[2]);
                 return true;
+            }
+            if (targetType == typeof(Vector2))
+            {
+                if (el.ValueKind != JsonValueKind.Array) return false;
+                float[] a = el.EnumerateArray().Select(x => x.GetSingle()).ToArray();
+                if (a.Length < 2) return false;
+                value = new Vector2(a[0], a[1]);
+                return true;
+            }
+            if (targetType == typeof(Raylib_cs.Color))
+            {
+                if (el.ValueKind != JsonValueKind.Array) return false;
+                int[] a = el.EnumerateArray().Select(x => x.GetInt32()).ToArray();
+                if (a.Length < 3) return false;
+                byte alpha = a.Length >= 4 ? (byte)a[3] : (byte)255;
+                value = new Raylib_cs.Color((byte)a[0], (byte)a[1], (byte)a[2], alpha);
+                return true;
+            }
+            if (targetType.IsEnum)
+            {
+                if (el.ValueKind == JsonValueKind.String
+                    && Enum.TryParse(targetType, el.GetString(), ignoreCase: true, out object? ev))
+                { value = ev; return true; }
+                if (el.ValueKind == JsonValueKind.Number)
+                { value = Enum.ToObject(targetType, el.GetInt32()); return true; }
+                return false;
             }
             if (targetType == typeof(float)) { value = el.GetSingle(); return true; }
             if (targetType == typeof(int))   { value = el.GetInt32();  return true; }

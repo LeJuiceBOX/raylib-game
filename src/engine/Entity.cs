@@ -1,5 +1,3 @@
-
-
 namespace PhrawgEngine
 {
     public class Entity
@@ -22,9 +20,20 @@ namespace PhrawgEngine
 
         public T AddComponent<T>() where T : Component, new()
         {
+            return AddComponent<T>(load: true);
+        }
+
+        /// <summary>
+        /// Add a component, optionally deferring Load(). The scene loader adds
+        /// components with load:false so it can apply JSON properties first, then
+        /// triggers a single Load() pass via LoadEntity(). Runtime callers use the
+        /// default overload and get immediate Load().
+        /// </summary>
+        public T AddComponent<T>(bool load) where T : Component, new()
+        {
             var c = new T { Owner = this };
             components.Add(c);
-            c.Load();
+            if (load) c.Load();
             return c;
         }
     // Component Handling

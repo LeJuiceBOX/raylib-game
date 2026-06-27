@@ -1,5 +1,0 @@
-
-namespace PhrawgEngine.Graphics
-{
-    
-}
