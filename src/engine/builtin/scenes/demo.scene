@@ -1,0 +1,28 @@
+[
+    {
+        "Name" : "FreeCam",
+        "Type": "PhrawgEngine.FreeCam",
+        "Properties":{},
+        "Components": []
+    },
+    {
+        "Name": "Plane",
+        "Type": "PhrawgEngine.Entity",
+        "Properties": {},
+        "Components": [
+            {
+                "Type": "PhrawgEngine.Transform",
+                "Properties": {
+                    "Position": [32,14,12]
+                }
+            },
+            {
+                "Type": "PhrawgEngine.SimpleSphereRenderer",
+                "Properties": {
+                    "Radius": 43.0,
+                    "Color": [255,0,0]
+                }
+            }
+        ]
+    }
+]
