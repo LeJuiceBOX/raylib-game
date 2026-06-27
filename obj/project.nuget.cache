@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "VFeWIrwu4Ms=",
+  "dgSpecHash": "VclE3PPw04DyNcUxEjW30vpluF+j41yZ0Od0bQwLm5+8hBYN2RIKuEr1ure6bou+jf9SPYQL0wsanxc0otEb9Q==",
   "success": true,
-  "projectFilePath": "C:\\Users\\phrawg\\Documents\\_Projects\\RayLib\\raylib-game\\raylib-game.csproj",
+  "projectFilePath": "/home/david/Projects/Raylib/raylib-game/raylib-game.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\phrawg\\.nuget\\packages\\raylib-cs\\8.0.0\\raylib-cs.8.0.0.nupkg.sha512"
+    "/home/david/.nuget/packages/raylib-cs/8.0.0/raylib-cs.8.0.0.nupkg.sha512"
   ],
   "logs": []
 }
