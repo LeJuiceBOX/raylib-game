@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/home/david/Projects/Raylib/raylib-game/raylib-game.csproj": {}
+    "C:\\Users\\phrawg\\Documents\\_Projects\\RayLib\\raylib-game\\raylib-game.csproj": {}
   },
   "projects": {
-    "/home/david/Projects/Raylib/raylib-game/raylib-game.csproj": {
+    "C:\\Users\\phrawg\\Documents\\_Projects\\RayLib\\raylib-game\\raylib-game.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/david/Projects/Raylib/raylib-game/raylib-game.csproj",
+        "projectUniqueName": "C:\\Users\\phrawg\\Documents\\_Projects\\RayLib\\raylib-game\\raylib-game.csproj",
         "projectName": "raylib-game",
-        "projectPath": "/home/david/Projects/Raylib/raylib-game/raylib-game.csproj",
-        "packagesPath": "/home/david/.nuget/packages/",
-        "outputPath": "/home/david/Projects/Raylib/raylib-game/obj/",
+        "projectPath": "C:\\Users\\phrawg\\Documents\\_Projects\\RayLib\\raylib-game\\raylib-game.csproj",
+        "packagesPath": "C:\\Users\\phrawg\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\phrawg\\Documents\\_Projects\\RayLib\\raylib-game\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/david/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\phrawg\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -32,6 +32,11 @@
           "warnAsError": [
             "NU1605"
           ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -59,7 +64,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.128/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.422/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
