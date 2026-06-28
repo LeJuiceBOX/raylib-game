@@ -85,20 +85,24 @@ namespace PhrawgEngine
             var lightUVs  = new List<Vector2>();
             var normals   = new List<Vector3>();
 
-            foreach (var face in faces)
+        int matchedFaces = 0;
+        foreach (var face in faces)
+        {
+            LightmapManifest.FaceUV? mf =
+                lm != null ? LightmapManifest.MatchByPosition(face, lm) : null;
+            if (mf != null) matchedFaces++;
+
+            int n = face.Winding.Count;
+            for (int i = 1; i < n - 1; i++)
             {
-                LightmapManifest.FaceUV? mf =
-                    lm != null ? LightmapManifest.MatchByPosition(face, lm) : null;
-
-                int n = face.Winding.Count;
-                for (int i = 1; i < n - 1; i++)
-                {
-                    AddVertex(face, face.Winding[0], mf, positions, albedoUVs, lightUVs, normals);
-                    AddVertex(face, face.Winding[i + 1], mf, positions, albedoUVs, lightUVs, normals);
-                    AddVertex(face, face.Winding[i], mf, positions, albedoUVs, lightUVs, normals);
-                }
+                AddVertex(face, face.Winding[0], mf, positions, albedoUVs, lightUVs, normals);
+                AddVertex(face, face.Winding[i + 1], mf, positions, albedoUVs, lightUVs, normals);
+                AddVertex(face, face.Winding[i], mf, positions, albedoUVs, lightUVs, normals);
             }
+        }
 
+        Console.WriteLine($"[WorldRenderer] group '{texture}': {faces.Count} faces, {matchedFaces} lightmap matched");
+                    
             int vcount = positions.Count;
             if (vcount == 0) return null;
 

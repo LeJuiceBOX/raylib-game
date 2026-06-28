@@ -64,14 +64,13 @@ namespace PhrawgEngine
         /// Find the manifest face whose winding matches a parsed face's winding by
         /// position (centroid + vertex count). Returns null if no match within eps.
         /// </summary>
-        public static FaceUV? MatchByPosition(MapData.Face face, Data data, float eps = 0.5f)
+        public static FaceUV? MatchByPosition(MapData.Face face, Data data, float eps = 2.0f)
         {
             Vector3 c = Centroid(face.Winding);
             FaceUV? best = null;
             float bestDist = eps;
             foreach (var mf in data.Faces)
             {
-                if (mf.Positions.Length != face.Winding.Count) continue;
                 Vector3 mc = Centroid(mf.Positions);
                 float dist = Vector3.Distance(c, mc);
                 if (dist < bestDist) { bestDist = dist; best = mf; }
