@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("raylib-game")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c35cb577ea7101f1fc3b9b580bd84191fed486c9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4540e537fd15b486902cad4f91990ffd3a42b503")]
 [assembly: System.Reflection.AssemblyProductAttribute("raylib-game")]
 [assembly: System.Reflection.AssemblyTitleAttribute("raylib-game")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -6,6 +6,8 @@ namespace PhrawgEngine
     public static class Game
     {
         // Initialize globals here.
+        public static int ScreenWidth = 1280;
+        public static int ScreenHeight = 720;
         public static Camera3D CurrentCamera = new(new Vector3(-25,25,-25),new Vector3(0,0,0), Vector3.UnitY,75f,CameraProjection.Perspective);
         public static Workspace Workspace = new();
 
@@ -36,11 +38,11 @@ namespace PhrawgEngine
 
         public static void Setup()
         {
-            Raylib.InitWindow(1280, 720, "Raylib 3D | PhrawgEngine");
+            Raylib.InitWindow(ScreenWidth, ScreenHeight, "Raylib 3D | PhrawgEngine");
             Raylib.SetTargetFPS(60);
 
             // Pipeline needs a GL context, so init after the window exists.
-            Pipeline.Init(1280, 720);
+            Pipeline.Init(ScreenWidth, ScreenHeight);
         }
 
         public static void Run()

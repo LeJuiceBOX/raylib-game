@@ -7,7 +7,7 @@ namespace PhrawgEngine
     {
         public Vector3 Direction = Vector3.Normalize(new Vector3(-0.5f, -1f, -0.3f));
         public Vector3 Color = new(1.1f, 1.05f, 0.95f);
-        public Vector3 Ambient = new(0.10f, 0.11f, 0.14f);
+        public Vector3 Ambient = new(0.01f,0.01f,0.02f);//new(0.10f, 0.11f, 0.14f);
     }
 
     public interface IRenderable
@@ -18,7 +18,7 @@ namespace PhrawgEngine
     public sealed class RenderPipeline
     {
         public DirectionalLight Light { get; } = new();
-        public float Exposure = 1.0f;
+        public float Exposure = 1f;
 
         private readonly List<IRenderable> _renderables = new();
 
@@ -97,7 +97,7 @@ namespace PhrawgEngine
             Raylib.SetShaderValue(_world, _locLightColor, Light.Color,  ShaderUniformDataType.Vec3);
             Raylib.SetShaderValue(_world, _locAmbient,    Light.Ambient,ShaderUniformDataType.Vec3);
 
-            float spec = 0.25f, shine = 32f;
+            float spec = 0.1f, shine = 32f;
             Raylib.SetShaderValue(_world, _locSpec,  spec,  ShaderUniformDataType.Float);
             Raylib.SetShaderValue(_world, _locShine, shine, ShaderUniformDataType.Float);
 

@@ -5,7 +5,7 @@ namespace PhrawgEngine
 {
     public class WorldRenderer : Entity, IRenderable
     {
-        public string mapPath = "src/engine/builtin/maps/demo";
+        public string mapPath = "src/engine/builtin/maps/gears";
 
         private readonly List<Model> _models = new();
         private readonly Dictionary<string, Texture2D> _textureCache = new();
@@ -21,13 +21,67 @@ namespace PhrawgEngine
             BuildWorld();
             Game.Pipeline?.Register(this);
             _registered = Game.Pipeline != null;
+            ApplySettings(mapPath + "/settings.json");
+        }
+
+        private void ApplySettings(string settingsPath)
+        {
+            if (!File.Exists(settingsPath) || Game.Pipeline == null)
+            {
+                Console.WriteLine($"[WorldRenderer] settings not found or pipeline unavailable: {settingsPath}");
+                return;
+            }
+
+            try
+            {
+                string json = File.ReadAllText(settingsPath);
+                var settings = Json.Deserialize(json);
+
+                if (settings.TryGetValue("Lighting", out var lightingObj) &&
+                    lightingObj is Dictionary<string, object?> lighting)
+                {
+                    if (lighting.TryGetValue("Exposure", out var exposureObj) &&
+                        exposureObj is double exposure)
+                    {
+                        Game.Pipeline.Exposure = (float)exposure;
+                    }
+
+                    if (lighting.TryGetValue("Sun", out var sunObj) &&
+                        sunObj is Dictionary<string, object?> sun)
+                    {
+                        if (sun.TryGetValue("Direction", out var dirObj) &&
+                            dirObj is List<object?> dir && dir.Count == 3)
+                            Game.Pipeline.Light.Direction = Vector3.Normalize(ToVector3(dir));
+
+                        if (sun.TryGetValue("Color", out var colObj) &&
+                            colObj is List<object?> col && col.Count == 3)
+                            Game.Pipeline.Light.Color = ToVector3(col);
+
+                        if (sun.TryGetValue("Ambient", out var ambObj) &&
+                            ambObj is List<object?> amb && amb.Count == 3)
+                            Game.Pipeline.Light.Ambient = ToVector3(amb);
+                    }
+                }
+
+                Console.WriteLine($"[WorldRenderer] settings applied from {settingsPath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WorldRenderer] failed to parse settings: {ex.Message}");
+            }
+        }
+
+        private static Vector3 ToVector3(List<object?> list)
+        {
+            float F(object? v) => v is double d ? (float)d : v is long l ? (float)l : 0f;
+            return new Vector3(F(list[0]), F(list[1]), F(list[2]));
         }
 
         private unsafe void BuildWorld()
         {
-            string mapFile  = mapPath + ".map";
-            string jsonFile = mapPath + "_lightmap.json";
-            string pngFile  = mapPath + "_lightmap.png";
+            string mapFile  = mapPath + "/level.map";
+            string jsonFile = mapPath + "/lighting/lightmap_data.json";
+            string pngFile  = mapPath + "/lighting/lightmap.png";
 
             if (!File.Exists(mapFile))
             {

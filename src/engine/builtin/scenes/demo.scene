@@ -9,7 +9,7 @@
         "Name": "World",
         "Type": "PhrawgEngine.WorldRenderer",
         "Properties": {
-            "mapPath": "src/engine/builtin/maps/gears_test"
+            "mapPath": "src/engine/builtin/maps/gears"
         },
         "Components": []
     },
