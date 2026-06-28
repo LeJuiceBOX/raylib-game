@@ -5,7 +5,7 @@ namespace PhrawgEngine
 {
     public class WorldRenderer : Entity, IRenderable
     {
-        public string mapPath = "src/engine/builtin/maps/gears";
+        public string mapPath = "src/engine/builtin/maps/demo";
 
         private readonly List<Model> _models = new();
         private readonly Dictionary<string, Texture2D> _textureCache = new();
@@ -16,20 +16,20 @@ namespace PhrawgEngine
 
         private const string TextureDir = "src/engine/builtin/textures/";
 
-        public override void Update(float dt)
-        {
-            if (Raylib.IsKeyPressed(KeyboardKey.R))
-            {
-                ApplySettings(mapPath+"/settings.json");
-            }
-        }
-
         public override void Load()
         {
             BuildWorld();
             Game.Pipeline?.Register(this);
             _registered = Game.Pipeline != null;
-            ApplySettings(mapPath + "/settings.json");
+            ApplySettings(mapPath + "/level.settings");
+        }
+
+        public override void Update(float dt)
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.R))
+            {
+                ApplySettings(mapPath + "/level.settings");
+            }
         }
 
         private void ApplySettings(string settingsPath)
@@ -42,34 +42,30 @@ namespace PhrawgEngine
 
             try
             {
-                string json = File.ReadAllText(settingsPath);
-                var settings = Json.Deserialize(json);
+                var keys = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-                if (settings.TryGetValue("Lighting", out var lightingObj) &&
-                    lightingObj is Dictionary<string, object?> lighting)
+                foreach (var line in File.ReadAllLines(settingsPath))
                 {
-                    if (lighting.TryGetValue("Exposure", out var exposureObj) &&
-                        exposureObj is double exposure)
-                    {
-                        Game.Pipeline.Exposure = (float)exposure;
-                    }
+                    int sep = line.IndexOf(':');
+                    if (sep < 0) continue;
 
-                    if (lighting.TryGetValue("Sun", out var sunObj) &&
-                        sunObj is Dictionary<string, object?> sun)
-                    {
-                        if (sun.TryGetValue("Direction", out var dirObj) &&
-                            dirObj is List<object?> dir && dir.Count == 3)
-                            Game.Pipeline.Light.Direction = Vector3.Normalize(ToVector3(dir));
-
-                        if (sun.TryGetValue("Color", out var colObj) &&
-                            colObj is List<object?> col && col.Count == 3)
-                            Game.Pipeline.Light.Color = ToVector3(col);
-
-                        if (sun.TryGetValue("Ambient", out var ambObj) &&
-                            ambObj is List<object?> amb && amb.Count == 3)
-                            Game.Pipeline.Light.Ambient = ToVector3(amb);
-                    }
+                    string key   = line[..sep].Trim();
+                    string value = line[(sep + 1)..].Trim();
+                    if (key.Length > 0) keys[key] = value;
                 }
+
+                if (keys.TryGetValue("LIGHTING_EXPOSURE", out var expStr) &&
+                    float.TryParse(expStr, out float exposure))
+                    Game.Pipeline.Exposure = exposure;
+
+                if (keys.TryGetValue("LIGHTING_SUN_DIRECTION", out var dirStr))
+                    Game.Pipeline.Light.Direction = Vector3.Normalize(ParseVector3(dirStr));
+
+                if (keys.TryGetValue("LIGHTING_SUN_COLOR", out var colStr))
+                    Game.Pipeline.Light.Color = ParseVector3(colStr);
+
+                if (keys.TryGetValue("LIGHTING_SUN_AMBIENT", out var ambStr))
+                    Game.Pipeline.Light.Ambient = ParseVector3(ambStr);
 
                 Console.WriteLine($"[WorldRenderer] settings applied from {settingsPath}");
             }
@@ -79,10 +75,15 @@ namespace PhrawgEngine
             }
         }
 
-        private static Vector3 ToVector3(List<object?> list)
+        private static Vector3 ParseVector3(string value)
         {
-            float F(object? v) => v is double d ? (float)d : v is long l ? (float)l : 0f;
-            return new Vector3(F(list[0]), F(list[1]), F(list[2]));
+            var parts = value.Split(',');
+            if (parts.Length != 3) throw new FormatException($"Expected 3 components, got: '{value}'");
+            return new Vector3(
+                float.Parse(parts[0].Trim()),
+                float.Parse(parts[1].Trim()),
+                float.Parse(parts[2].Trim())
+            );
         }
 
         private unsafe void BuildWorld()
