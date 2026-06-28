@@ -9,11 +9,13 @@ namespace PhrawgEngine
         public static int ScreenWidth = 1280;
         public static int ScreenHeight = 720;
         public static Camera3D CurrentCamera = new(new Vector3(-25,25,-25),new Vector3(0,0,0), Vector3.UnitY,75f,CameraProjection.Perspective);
+
         public static Workspace Workspace = new();
 
         // The HDR render pipeline. Renderer components register with this.
         public static RenderPipeline Pipeline = new();
 
+        
         private static void LoadGame()
         {
             Console.WriteLine("Game started.");
@@ -24,9 +26,11 @@ namespace PhrawgEngine
         {
             Workspace.UpdateWorkspace(dt);
 
-            if (Raylib.IsKeyDown(KeyboardKey.Enter))
+            if (Raylib.IsKeyPressed(KeyboardKey.Escape))
             {
-                throw new InvalidOperationException("Something went wrong!");
+                Raylib.EnableCursor();
+                if (Raylib.IsCursorHidden())
+                    Raylib.ShowCursor();
             }
         }
 
@@ -40,7 +44,7 @@ namespace PhrawgEngine
         {
             Raylib.InitWindow(ScreenWidth, ScreenHeight, "Raylib 3D | PhrawgEngine");
             Raylib.SetTargetFPS(60);
-
+            Raylib.SetExitKey(KeyboardKey.Delete);
             // Pipeline needs a GL context, so init after the window exists.
             Pipeline.Init(ScreenWidth, ScreenHeight);
         }

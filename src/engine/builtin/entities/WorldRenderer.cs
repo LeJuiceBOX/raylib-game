@@ -16,6 +16,14 @@ namespace PhrawgEngine
 
         private const string TextureDir = "src/engine/builtin/textures/";
 
+        public override void Update(float dt)
+        {
+            if (Raylib.IsKeyPressed(KeyboardKey.R))
+            {
+                ApplySettings(mapPath+"/settings.json");
+            }
+        }
+
         public override void Load()
         {
             BuildWorld();
